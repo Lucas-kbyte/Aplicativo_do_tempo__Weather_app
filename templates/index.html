@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Web Weather App</title>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+        <link rel="preconnect" href="https://fonts.gstatic.com">
+        <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+        
+        <style>
+            body { 
+                font-family: 'Poppins', sans-serif;
+                background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #2e1065 100%);
+                color: #ffffff;
+                min-height: 100vh;
+            }
+            
+            .weather-card { 
+                background: rgba(15, 23, 42, 0.65); 
+                backdrop-filter: blur(16px);
+                -webkit-backdrop-filter: blur(16px);
+                border: 1px solid rgba(255, 255, 255, 0.08); 
+                border-radius: 1.5rem; 
+                max-width: 450px; 
+                width: 100%; 
+                padding: 2.5rem 2rem; 
+                box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+            }
+
+            .app-title {
+                font-size: 1.6rem;
+                letter-spacing: 1px;
+                background: linear-gradient(to right, #ffffff, #38bdf8);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+            }
+
+            .text-white-pure {
+                color: #ffffff !important;
+            }
+            
+            .weather-display-container {
+                position: relative;
+                width: 100%;
+                height: 240px; 
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                margin: 0.5rem 0;
+                overflow: hidden;
+                border-radius: 1rem;
+            }
+
+            .weather-bg-image {
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;    
+                height: 100%;   
+                object-fit: cover; 
+                opacity: 0.38;  
+                z-index: 1;
+                pointer-events: none;
+                
+                -webkit-mask-image: radial-gradient(circle at center, rgba(0,0,0,1) 20%, rgba(0,0,0,0) 78%);
+                mask-image: radial-gradient(circle at center, rgba(0,0,0,1) 20%, rgba(0,0,0,0) 78%);
+            }
+            
+            .weather-temp-text {
+                position: relative;
+                z-index: 2;
+                font-size: 6.8rem;
+                font-weight: 700;
+                letter-spacing: -3px;
+                text-shadow: 0 10px 30px rgba(0, 0, 0, 0.8), 0 2px 10px rgba(0, 0, 0, 0.5);
+            }
+            
+            .search-input {
+                background: rgba(255, 255, 255, 0.05) !important;
+                border: 1px solid rgba(255, 255, 255, 0.1) !important;
+                color: #ffffff !important;
+                border-radius: 0.75rem 0 0 0.75rem;
+                transition: all 0.3s;
+            }
+            .search-input:focus {
+                background: rgba(255, 255, 255, 0.08) !important;
+                border-color: rgba(56, 189, 248, 0.5) !important;
+                box-shadow: 0 0 15px rgba(56, 189, 248, 0.15);
+            }
+            .search-btn {
+                border-radius: 0 0.75rem 0.75rem 0;
+                background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+                border: none;
+                color: white;
+                transition: opacity 0.2s;
+            }
+            .search-btn:hover {
+                opacity: 0.9;
+            }
+            
+            .info-box { 
+                background: rgba(255, 255, 255, 0.03); 
+                border: 1px solid rgba(255, 255, 255, 0.05); 
+                border-radius: 1rem;
+                padding: 1.2rem 1rem;
+                text-align: center;
+                backdrop-filter: blur(4px);
+                transition: transform 0.2s;
+            }
+            .info-box:hover {
+                transform: translateY(-2px);
+                border-color: rgba(255, 255, 255, 0.1);
+            }
+
+            .history-btn {
+                background: rgba(255, 255, 255, 0.05);
+                border: 1px solid rgba(255, 255, 255, 0.08);
+                color: #e2e8f0 !important;
+                font-size: 0.75rem;
+                font-weight: 500;
+                transition: all 0.2s;
+            }
+            .history-btn:hover {
+                background: #ffffff;
+                color: #0f172a !important;
+                transform: scale(1.05);
+            }
+
+            .loading-overlay {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100vw;
+                height: 100vh;
+                background: rgba(15, 23, 42, 0.85);
+                backdrop-filter: blur(8px);
+                -webkit-backdrop-filter: blur(8px);
+                z-index: 9999;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                opacity: 0;
+                pointer-events: none;
+                transition: opacity 0.3s ease-in-out;
+            }
+
+            .loading-overlay.active {
+                opacity: 1;
+                pointer-events: auto;
+            }
+
+            .spinner-custom {
+                width: 65px;
+                height: 65px;
+                border: 5px solid rgba(56, 189, 248, 0.1);
+                border-top: 5px solid #38bdf8;
+                border-radius: 50%;
+                animation: spin 1s linear infinite;
+                filter: drop-shadow(0 0 15px rgba(56, 189, 248, 0.5));
+            }
+
+            .loading-text {
+                margin-top: 1.5rem;
+                font-size: 1.1rem;
+                font-weight: 500;
+                color: #e2e8f0;
+                letter-spacing: 1.5px;
+                animation: pulse 1.5s ease-in-out infinite;
+            }
+
+            @keyframes spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+            }
+            @keyframes pulse {
+                0%, 100% { opacity: 0.6; }
+                50% { opacity: 1; }
+            }
+        </style>
+    </head>
+    <body class="d-flex align-items-center justify-content-center p-3">
+
+        <div id="loadingOverlay" class="loading-overlay">
+            <div class="spinner-custom"></div>
+            <div class="loading-text">Consultando o clima...</div>
+        </div>
+        
+        <div class="weather-card shadow-lg">
+            <h2 class="text-center app-title fw-bold mb-4">
+                <i class="fa-solid fa-wind text-info me-2"></i>AeroWeather
+            </h2>
+            
+            {% if historico %}
+            <div class="d-flex justify-content-center flex-wrap gap-2 mb-4">
+                {% for cid in historico %}
+                <form method="POST" class="weather-form">
+                    <input type="hidden" name="cidade" value="{{ cid }}">
+                    <button type="submit" class="btn btn-sm history-btn rounded-pill px-3">{{ cid }}</button>
+                </form>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <form method="POST" class="d-flex mb-4 weather-form">
+                <input type="text" name="cidade" placeholder="Buscar cidade ou país..." class="form-control search-input py-2 px-3" required>
+                <button type="submit" class="btn search-btn px-4"><i class="fa-solid fa-magnifying-glass"></i></button>
+            </form>
+
+            {% if erro %}
+                <div class="alert alert-danger text-center mb-4" role="alert" style="background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.3); color: #fca5a5;">{{ erro }}</div>
+            {% endif %}
+
+            {% if clima %}
+                {% set condicao = clima['weather'][0]['main'] %}
+                {% set icon_code = clima['weather'][0]['icon'] %}
+                {% set weather_img = 'nublado.png' %}
+                
+                {% if condicao in ['Rain', 'Drizzle', 'Thunderstorm'] or 'rain' in icon_code %}
+                    {% set weather_img = 'chuvendo.png' %}
+                {% elif condicao == 'Clear' or icon_code in ['01d', '01n'] %}
+                    {% set weather_img = 'ensolarado.png' %}
+                {% else %}
+                    {% set weather_img = 'nublado.png' %}
+                {% endif %}
+
+                <div class="text-center">
+                    <h3 class="text-white-pure fw-bold mb-1" style="font-size: 1.45rem;">
+                        {{ clima['name'] }}<span class="text-info fw-normal small">, {{ clima['sys']['country'] }}</span>
+                    </h3>
+                    
+                    <p class="text-info text-uppercase fw-semibold tracking-wide small mb-1" style="font-size: 0.75rem; opacity: 0.85;">
+                        {{ clima['weather'][0]['description'] }}
+                    </p>
+                    
+                    <div class="weather-display-container">
+                        <img src="{{ url_for('static', filename=weather_img) }}" alt="Clima" class="weather-bg-image">
+                        <div class="weather-temp-text text-white-pure">
+                            {{ clima['main']['temp'] | round(1) }}°
+                        </div>
+                    </div>
+                    
+                    <div class="row g-3 pt-2">
+                        
+                        <div class="col-6">
+                            <div class="info-box">
+                                <i class="fa-solid fa-droplet text-info mb-2 fs-5"></i>
+                                <span class="d-block text-white-50 small text-uppercase mb-1" style="font-size: 0.65rem; letter-spacing: 0.5px;">Umidade</span>
+                                <span class="fs-5 fw-bold text-white-pure">{{ clima['main']['humidity'] }}%</span>
+                            </div>
+                        </div>
+                        
+                        <div class="col-6">
+                            <div class="info-box">
+                                <i class="fa-solid fa-wind text-success mb-2 fs-5"></i>
+                                <span class="d-block text-white-50 small text-uppercase mb-1" style="font-size: 0.65rem; letter-spacing: 0.5px;">Vento</span>
+                                <span class="fs-5 fw-bold text-white-pure">{{ (clima['wind']['speed'] * 3.6) | round(1) }} km/h</span>
+                            </div>
+                        </div>
+                        
+                        <div class="col-6">
+                            <div class="info-box">
+                                <i class="fa-solid fa-temperature-half text-danger mb-2 fs-5"></i>
+                                <span class="d-block text-white-50 small text-uppercase mb-1" style="font-size: 0.65rem; letter-spacing: 0.5px;">Sensação</span>
+                                <span class="fs-5 fw-bold text-white-pure">{{ clima['main']['feels_like'] | round(1) }}°C</span>
+                            </div>
+                        </div>
+                        
+                        <div class="col-6">
+                            <div class="info-box">
+                                <i class="fa-solid fa-sun text-warning mb-2 fs-5"></i>
+                                <span class="d-block text-white-50 small text-uppercase mb-1" style="font-size: 0.65rem; letter-spacing: 0.5px;">Sol</span>
+                                <span class="text-white-pure d-block fw-bold" style="font-size: 0.8rem; margin-top: 2px;">
+                                    {{ clima['sys']['sunrise'] | formatar_hora(clima['timezone']) }} - {{ clima['sys']['sunset'] | formatar_hora(clima['timezone']) }}
+                                </span>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            {% endif %}
+            
+        </div>
+
+        <script>
+            document.addEventListener("DOMContentLoaded", function() {
+                const forms = document.querySelectorAll('.weather-form');
+                const overlay = document.getElementById('loadingOverlay');
+
+                forms.forEach(form => {
+                    form.addEventListener('submit', function() {
+                        overlay.classList.add('active');
+                    });
+                });
+            });
+        </script>
+
+    </body>
+</html>
